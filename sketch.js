@@ -30,6 +30,7 @@ function draw() {
 //leggo i dati di ogni singola riga
 let lat = data.getNum(rowNumber, "Latitude");
 let lon = data.getNum(rowNumber, "Longitude");
+let name = data.getString(rowNumber, "Country");
 
 //converto le coordinate geografiche in coordinate pixel
 let x = map(lon, minLon, maxLon, 0, width);
@@ -39,8 +40,10 @@ let radius = 20;
 
 //calcolare la distanza 
 let d = dist(x, y, mouseX, mouseY);
+
 if(d < radius){
   fill("red");
+  text(name, x, y);
 }
 if (d > radius){
   fill("green");
