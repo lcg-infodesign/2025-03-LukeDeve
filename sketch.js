@@ -4,6 +4,24 @@
 let dataTable = null;
 let worldGeo = null;
 
+// ========================================
+// INTRO ANIMAZIONE - INIZIO
+// ========================================
+let showIntro = true;
+let introAlpha = 255;
+let typewriterIndex = 0;
+let typewriterSpeed = 60; // millisecondi tra lettere
+let lastTypeTime = 0;
+let textComplete = false;
+let fadeStartTime = 0;
+let pauseDuration = 6000; // 6 secondi di pausa dopo testo completo
+let fadeDuration = 2000; // 2 secondi per dissolvere
+
+let introText = "The world is full of volcanoes — many hidden, many forgotten... \n \n To understand their distribution and characteristics, here is a global map of volcanoes. \n \nMoving on them, you can see their location, type, status, and last known eruption.";
+// ========================================
+// INTRO ANIMAZIONE - FINE
+// ========================================
+
 // Variabili per lo zoom
 let zoomLevel = 1;
 let centerX = 0;
@@ -43,6 +61,7 @@ function setup() {
 }
 
 function draw() {
+
   background(20); 
 
   push(); //salva dove sono ora
@@ -63,10 +82,23 @@ function draw() {
   // tooltip (fuori dalla trasformazione per rimanere fisso)
   drawHoverTooltip();
   
-  // pulsanti zoom, leggenda e istruzioni per lo zoom
-  drawZoomButtons();
-  drawLegend();
-  drawZoomInstructions();
+  // pulsanti zoom, leggenda e istruzioni per lo zoom (solo se intro è finita)
+  if (!showIntro) {
+    drawZoomButtons();
+    drawLegend();
+    drawZoomInstructions();
+  }
+  
+
+  // ========================================
+  // INTRO ANIMAZIONE - INIZIO
+  // ========================================
+  if (showIntro) {
+    drawIntroOverlay();
+  }
+  // ========================================
+  // INTRO ANIMAZIONE - FINE
+  // ========================================
 }
 
 // --------------------
@@ -405,6 +437,18 @@ function drawZoomInstructions() { //quello sotto ai due bottoni
 }
 
 function mousePressed() {
+  // ========================================
+  // INTRO ANIMAZIONE - INIZIO
+  // ========================================
+  // Se l'intro è attiva, permetti di saltarla con un click
+  if (showIntro) {
+    showIntro = false;
+    return;
+  }
+  // ========================================
+  // INTRO ANIMAZIONE - FINE
+  // ========================================
+  
   let oldZoom = zoomLevel; //salva lo zoom attuale
   
   // Funzione helper per controllare se il mouse è dentro un pulsante
@@ -447,6 +491,15 @@ function mousePressed() {
 }
 
 function mouseDragged() { //funzione preimpostata di p5 per mouse premuto e spostato mentre premuto
+  // ========================================
+  // INTRO ANIMAZIONE - INIZIO
+  // ========================================
+  // Non permettere drag durante l'intro
+  if (showIntro) return;
+  // ========================================
+  // INTRO ANIMAZIONE - FINE
+  // ========================================
+  
   // Non permettere drag se zoom è 1x
   if (zoomLevel <= 1) return;
   
@@ -466,3 +519,105 @@ function mouseDragged() { //funzione preimpostata di p5 per mouse premuto e spos
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
+
+// ========================================
+// INTRO ANIMAZIONE - INIZIO
+// ========================================
+
+function drawIntroOverlay() {
+  
+  updateTypewriter();
+  
+  // Disegna l'overlay nero semi-trasparente
+  push();
+  fill(0, introAlpha);
+  noStroke();
+  rect(0, 0, width, height);
+  
+  // Disegna il testo con effetto typewriter
+  drawIntroText();
+  
+  pop();
+}
+
+function updateTypewriter() {
+  let currentTime = millis();
+  
+  // Fase 1: Effetto typewriter
+  if (!textComplete && currentTime - lastTypeTime > typewriterSpeed) {
+    if (typewriterIndex < introText.length) {
+      typewriterIndex++;
+      lastTypeTime = currentTime;
+    } else {
+      // Testo completo, inizia la pausa
+      textComplete = true;
+      fadeStartTime = currentTime;
+    }
+  }
+  
+  // Fase 2: Pausa dopo testo completo
+  if (textComplete && currentTime - fadeStartTime > pauseDuration) {
+    // Fase 3: Fade out
+    let fadeProgress = (currentTime - fadeStartTime - pauseDuration) / fadeDuration;
+    fadeProgress = constrain(fadeProgress, 0, 1);
+    
+    introAlpha = 255 * (1 - fadeProgress);
+    
+    // Fine animazione
+    if (fadeProgress >= 1) {
+      showIntro = false;
+    }
+  }
+}
+
+function drawIntroText() {
+  // Testo da mostrare (fino all'indice typewriter)
+  let displayText = introText.substring(0, typewriterIndex);
+  
+  push();
+  fill(255, introAlpha);
+  textAlign(CENTER, CENTER);
+  textSize(16);
+  textFont('Georgia');
+  
+  // Calcola l'area per il testo con margini
+  let textAreaWidth = width * 0.7; // 70% della larghezza
+  let textAreaHeight = height * 0.7; // 70% dell'altezza
+  let textX = width / 2;
+  let textY = height / 2;
+  
+  // Disegna il testo con wrapping automatico
+  drawWrappedText(displayText, textX, textY, textAreaWidth);
+  
+  pop();
+}
+
+function drawWrappedText(txt, x, y, maxWidth) {
+  let words = txt.split(' ');
+  let lines = [];
+  let currentLine = '';
+  
+  // Calcola le righe necessarie
+  for (let word of words) {
+    let testLine = currentLine + (currentLine ? ' ' : '') + word;
+    if (textWidth(testLine) <= maxWidth) {
+      currentLine = testLine;
+    } else {
+      if (currentLine) lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  
+  // Disegna le righe centrate
+  let lineHeight = 38;
+  let startY = y - (lines.length * lineHeight) / 2;
+  
+  for (let i = 0; i < lines.length; i++) {
+    text(lines[i], x, startY + i * lineHeight);
+  }
+}
+
+// ========================================
+// INTRO ANIMAZIONE - FINE
+// ========================================
