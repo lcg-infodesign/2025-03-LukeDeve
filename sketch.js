@@ -31,7 +31,7 @@ function preload() {
   dataTable = loadTable('data-vulcano.csv', 'csv', 'header');
   
   // Carica la mappa del mondo dal file json 
-  worldGeo = loadJSON('countries.geo.json');
+  worldGeo = loadJSON('asset/mappa/countries.geo.json');
 }
 
 function setup() {
